@@ -1,33 +1,46 @@
 #!/usr/bin/python3
 
+""" script that reads stdin line by line and computes metrics """
+
 import sys
 
-total_file_size = 0
-status_code_counts = {200: 0, 301: 0, 400: 0,
-                      401: 0, 403: 0, 404: 0, 405: 0, 500: 0}
+
+def printStatus(dic, size):
+    """ Prints information """
+    print("File size: {:d}".format(size))
+    for i in sorted(dic.keys()):
+        if dic[i] != 0:
+            print("{}: {:d}".format(i, dic[i]))
+
+
+# sourcery skip: use-contextlib-suppress
+statusCodes = {"200": 0, "301": 0, "400": 0, "401": 0, "403": 0,
+               "404": 0, "405": 0, "500": 0}
+
+count = 0
+size = 0
 
 try:
-    for idx, line in enumerate(sys.stdin, start=1):
-        parts = line.split()
-        if len(parts) == 7 and parts[6].isdigit():
-            file_size = int(parts[6])
-            status_code = int(parts[5])
-            total_file_size += file_size
-            status_code_counts[status_code] = status_code_counts.get(
-                status_code, 0) + 1
+    for line in sys.stdin:
+        if count != 0 and count % 10 == 0:
+            printStatus(statusCodes, size)
 
-            if idx % 10 == 0:
-                print("File size:", total_file_size)
-                for code in sorted(status_code_counts):
-                    if status_code_counts[code] > 0:
-                        print(f"{code}: {status_code_counts[code]}")
-                print()
+        stlist = line.split()
+        count += 1
+
+        try:
+            size += int(stlist[-1])
+        except Exception:
+            pass
+
+        try:
+            if stlist[-2] in statusCodes:
+                statusCodes[stlist[-2]] += 1
+        except Exception:
+            pass
+    printStatus(statusCodes, size)
+
 
 except KeyboardInterrupt:
-    pass
-
-finally:
-    print("File size:", total_file_size)
-    for code in sorted(status_code_counts):
-        if status_code_counts[code] > 0:
-            print(f"{code}: {status_code_counts[code]}")
+    printStatus(statusCodes, size)
+    raise
