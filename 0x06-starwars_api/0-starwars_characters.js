@@ -11,20 +11,27 @@ request(url, (err, res, body) => {
   if (res.statusCode === 200) {
     const data = JSON.parse(body);
     const characters = data.characters;
-    characters.forEach((characterUrl) => {
-      request(characterUrl, (err, res, body) => {
-        if (err) {
-          console.error(err);
-          return;
-        }
-
-        if (res.statusCode === 200) {
-          const characterData = JSON.parse(body);
-          console.log(characterData.name);
-        }
-      });
+    characters.forEach(async (characterUrl) => {
+      const name = await fetchName(characterUrl);
     });
   } else {
     console.error(res.statusCode);
   }
 });
+
+async function fetchName(url) {
+  return new Promise((res, rej) => {
+    request(url, (error, response, body) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      if (response.statusCode !== 200) {
+        reject(`${response.statusCode}`);
+        return;
+      }
+      const characterData = JSON.parse(body);
+      console.log(characterData.name);
+    });
+  });
+}
